@@ -1,5 +1,39 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+* {
+  margin: 0;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
 input,
-button {
+button,
+textarea,
+select {
+  font: inherit;
+}
+
+#root,
+#__next {
+  isolation: isolate;
+}
+
+input,
+button,
+code,
+input {
   font-size: 1rem;
 }
 
@@ -7,7 +41,7 @@ input {
   flex-grow: 1;
   padding: 6px;
   border: 1px solid #ccc;
-  border-radius: 4px;
+  border-radius: 8px;
 }
 
 button {
@@ -15,9 +49,10 @@ button {
   color: white;
   padding: 8px 16px;
   border: none;
-  border-radius: 4px;
+  border-radius: 8px;
   cursor: pointer;
   margin-left: 10px;
+  font-weight: bold;
 }
 
 form {

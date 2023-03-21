@@ -1,0 +1,20 @@
+.message {
+  padding: 1rem;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  display: flex;
+}
+
+.role {
+  width: 100px;
+  font-weight: bold;
+  flex-shrink: 0;
+}
+
+.assistant {
+  background-color: white;
+}
+
+.user {
+  background-color: #eee;
+}
