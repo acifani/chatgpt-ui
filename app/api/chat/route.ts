@@ -3,7 +3,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 
 const configuration = new Configuration({
   organization: 'org-UTD5uFzQzn85yhW8Jn9YIpM0',
-  apiKey: process.env.NEXT_PUBLIC_OPENAI_API_KEY,
+  apiKey: process.env.OPENAI_API_KEY,
 });
 const openai = new OpenAIApi(configuration);
 
