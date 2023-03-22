@@ -9,7 +9,7 @@
 
 .chatContainer {
   height: 600px;
-  border: 1px solid #ccc;
+  border: 1px solid var(--mid-grey);
   border-radius: 8px;
   display: flex;
   flex-direction: column-reverse;

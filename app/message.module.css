@@ -1,6 +1,5 @@
 .message {
   padding: 1rem;
-  white-space: pre-wrap;
   word-wrap: break-word;
   display: flex;
 }
@@ -12,9 +11,9 @@
 }
 
 .assistant {
-  background-color: white;
+  background-color: var(--white);
 }
 
 .user {
-  background-color: #eee;
+  background-color: var(--lightest-grey);
 }

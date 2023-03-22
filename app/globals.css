@@ -30,6 +30,48 @@ select {
   isolation: isolate;
 }
 
+/*Light Mode*/
+:root {
+  --black: #000000;
+  --darkest-grey: #222222;
+  --darker-grey: #444444;
+  --dark-grey: #666666;
+  --mid-grey: #999999;
+  --light-grey: #cccccc;
+  --lighter-grey: #dddddd;
+  --lightest-grey: #eeeeee;
+  --white: #ffffff;
+  --blue: #007aff;
+  --green: #3cd070;
+  --yellow: #ffcd1b;
+  --red: #ff5f5f;
+}
+
+/*Dark Mode*/
+@media (prefers-color-scheme: dark) {
+  :root {
+    --black: #ffffff;
+    --darkest-grey: #eeeeee;
+    --darker-grey: #cccccc;
+    --dark-grey: #999999;
+    --mid-grey: #666666;
+    --light-grey: #444444;
+    --lighter-grey: #222222;
+    --lightest-grey: #111111;
+    --white: #000000;
+    --blue: #4ea1f3;
+    --green: #8affc1;
+    --yellow: #ffe17d;
+    --red: #ff7b72;
+  }
+}
+
+body,
+input {
+  background: var(--white);
+  color: var(--darkest-grey);
+}
+
 input,
 button,
 code,
@@ -40,12 +82,12 @@ input {
 input {
   flex-grow: 1;
   padding: 6px;
-  border: 1px solid #ccc;
+  border: 1px solid var(--mid-grey);
   border-radius: 8px;
 }
 
 button {
-  background-color: #0070f3;
+  background-color: var(--blue);
   color: white;
   padding: 8px 16px;
   border: none;
