@@ -7,9 +7,15 @@ import styles from './page.module.css';
 
 const inter = Inter({ subsets: ['latin'] });
 
+const systemMessage: Message = {
+  role: 'system',
+  content:
+    'You are ChatGPT, a large language model trained by OpenAI. Answer as concisely as possible.',
+};
+
 export default function Home() {
   const [input, setInput] = useState('');
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<Message[]>([systemMessage]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
   async function handleSubmit(e: FormEvent) {

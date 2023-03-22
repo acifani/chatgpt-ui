@@ -4,11 +4,13 @@ import { oneLight } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import styles from './message.module.css';
 
 export interface Message {
-  role: 'assistant' | 'user';
+  role: 'assistant' | 'user' | 'system';
   content: string;
 }
 
 export function ChatLine({ msg }: { msg: Message }) {
+  if (msg.role === 'system') return null;
+
   return (
     <div className={styles.message + ' ' + styles[msg.role]}>
       <p className={styles.role}>{msg.role}</p>
