@@ -14,7 +14,7 @@ export function ChatLine({ msg }: { msg: Message }) {
   return (
     <div className={styles.message + ' ' + styles[msg.role]}>
       <p className={styles.role}>{msg.role}</p>
-      <p>
+      <div>
         <ReactMarkdown
           components={{
             code({ node, inline, className, children, ...props }) {
@@ -40,7 +40,7 @@ export function ChatLine({ msg }: { msg: Message }) {
         >
           {msg.content}
         </ReactMarkdown>
-      </p>
+      </div>
     </div>
   );
 }
