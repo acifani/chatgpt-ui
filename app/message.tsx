@@ -10,7 +10,7 @@ const SyntaxHighlighter = dynamic(() =>
 const ReactMarkdown = lazy(() => import('react-markdown'));
 
 export interface Message {
-  role: 'assistant' | 'user' | 'system';
+  role: 'assistant' | 'user' | 'system' | 'error';
   content: string;
 }
 

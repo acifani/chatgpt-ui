@@ -30,7 +30,6 @@ select {
   isolation: isolate;
 }
 
-/*Light Mode*/
 :root {
   --black: #000000;
   --darkest-grey: #222222;
@@ -47,7 +46,6 @@ select {
   --red: #ff5f5f;
 }
 
-/*Dark Mode*/
 @media (prefers-color-scheme: dark) {
   :root {
     --black: #ffffff;

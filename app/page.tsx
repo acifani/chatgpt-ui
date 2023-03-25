@@ -1,9 +1,11 @@
 'use client';
 
+import { fetchEventSource } from '@microsoft/fetch-event-source';
 import { Inter } from 'next/font/google';
-import { type FormEvent, useState } from 'react';
+import { useReducer, type FormEvent } from 'react';
 import { ChatLine, type Message } from './message';
 import styles from './page.module.css';
+import { useLocalStorage } from './useLocalStorage';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -13,10 +15,90 @@ const systemMessage: Message = {
     'You are ChatGPT, a large language model trained by OpenAI. Answer as concisely as possible.',
 };
 
+interface State {
+  input: string;
+  messages: Message[];
+  isLoading: boolean;
+  currentMessage: string;
+}
+
+const defaultState: State = {
+  input: '',
+  isLoading: false,
+  messages: [systemMessage],
+  currentMessage: '',
+};
+
+type Action =
+  | { type: 'setInput'; payload: string }
+  | { type: 'sendingUserMessage'; payload: string }
+  | { type: 'startReceivingMessage' }
+  | { type: 'receivedMessageChunk'; payload: string }
+  | { type: 'receivedError'; payload: string }
+  | { type: 'finishedReceivingMessage' };
+
+function reducer(state: State, action: Action): State {
+  switch (action.type) {
+    case 'setInput':
+      return { ...state, input: action.payload };
+
+    case 'sendingUserMessage':
+      return {
+        ...state,
+        input: '',
+        isLoading: true,
+        messages: [
+          ...state.messages,
+          { role: 'user', content: action.payload },
+        ],
+      };
+
+    case 'receivedMessageChunk':
+      const newMessage = state.currentMessage + action.payload;
+
+      // if previous currentMessage is empty, this is the first chunk
+      // so we need to add a new message to the array. otherwise, we
+      // need to replace the last message in the array with the new
+      const newMessages =
+        state.currentMessage === ''
+          ? [...state.messages]
+          : [...state.messages.slice(0, state.messages.length - 1)];
+
+      return {
+        ...state,
+        currentMessage: newMessage,
+        messages: [...newMessages, { role: 'assistant', content: newMessage }],
+      };
+
+    case 'finishedReceivingMessage':
+      return {
+        ...state,
+        isLoading: false,
+        currentMessage: '',
+      };
+    case 'receivedError':
+      return {
+        ...state,
+        isLoading: false,
+        currentMessage: '',
+        messages: [
+          ...state.messages,
+          { role: 'error', content: action.payload },
+        ],
+      };
+    default:
+      return state;
+  }
+}
+
 export default function Home() {
-  const [input, setInput] = useState('');
-  const [messages, setMessages] = useState<Message[]>([systemMessage]);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [model, setModel] = useLocalStorage('chatgptui-model', 'gpt-3.5-turbo');
+  const [apiKey, setApiKey] = useLocalStorage('chatgptui-apikey', '');
+
+  const [{ input, messages, isLoading, currentMessage }, dispatch] = useReducer(
+    reducer,
+    defaultState,
+  );
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -26,35 +108,91 @@ export default function Home() {
       { role: 'user', content: input },
     ] satisfies Message[];
 
-    setMessages(newMessages);
-    setInput('');
+    dispatch({ type: 'sendingUserMessage', payload: input });
 
-    setTimeout(() => setIsLoading(true), 500);
-    const response = await fetch('/api/chat', {
+    await fetchEventSource('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
-      body: JSON.stringify({ messages: newMessages }),
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: model,
+        messages: newMessages,
+        stream: true,
+      }),
+      async onopen(response) {
+        if (response.status >= 400) {
+          dispatch({ type: 'receivedError', payload: response.statusText });
+        }
+      },
+      onmessage(ev) {
+        console.log(ev.data);
+        if (ev.data === '[DONE]') {
+          dispatch({ type: 'finishedReceivingMessage' });
+          return;
+        }
+
+        const data = JSON.parse(ev.data);
+        const content = data.choices?.[0]?.delta?.content;
+        if (content) {
+          dispatch({
+            type: 'receivedMessageChunk',
+            payload: content,
+          });
+        }
+      },
+      onerror(err) {
+        dispatch({ type: 'receivedError', payload: err.message });
+      },
     });
-    const { message } = await response.json();
-    setMessages([...newMessages, message]);
-    setIsLoading(false);
   }
 
   return (
     <main className={inter.className}>
       <div className={styles.container}>
-        <h1>ChatGPT UI</h1>
+        <header className={styles.header}>
+          <h1>ChatGPT UI</h1>
+          <menu>
+            <div className={styles.group}>
+              <label htmlFor="apiKey">API Key</label>
+              <input
+                type="password"
+                name="apiKey"
+                placeholder="*************"
+                onChange={(e) => setApiKey(e.target.value)}
+                value={apiKey}
+              />
+            </div>
+            <div className={styles.group}>
+              <label htmlFor="model">Model</label>
+              <input
+                type="text"
+                name="model"
+                placeholder="gpt-3.5-turbo"
+                onChange={(e) => setModel(e.target.value)}
+                value={model}
+              />
+            </div>
+          </menu>
+        </header>
         <div className={styles.chatContainer}>
           <div>
             {messages.map((msg, i) => (
               <ChatLine key={i} msg={msg} />
             ))}
-            {isLoading && (
+            {isLoading && currentMessage === '' && (
               <ChatLine msg={{ role: 'assistant', content: '...' }} />
             )}
           </div>
         </div>
         <form onSubmit={handleSubmit}>
-          <input value={input} onChange={(e) => setInput(e.target.value)} />
+          <input
+            value={input}
+            onChange={(e) =>
+              dispatch({ type: 'setInput', payload: e.target.value })
+            }
+          />
           <button type="submit">Send</button>
         </form>
       </div>
