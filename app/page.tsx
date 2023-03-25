@@ -91,6 +91,8 @@ function reducer(state: State, action: Action): State {
   }
 }
 
+class APIError extends Error {}
+
 export default function Home() {
   const [model, setModel] = useLocalStorage('chatgptui-model', 'gpt-3.5-turbo');
   const [apiKey, setApiKey] = useLocalStorage('chatgptui-apikey', '');
@@ -102,6 +104,21 @@ export default function Home() {
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
+    if (!apiKey) {
+      dispatch({
+        type: 'receivedError',
+        payload: 'Please enter an API key',
+      });
+      return;
+    }
+
+    if (!model) {
+      dispatch({
+        type: 'receivedError',
+        payload: 'Please select a model',
+      });
+      return;
+    }
 
     const newMessages = [
       ...messages,
@@ -110,42 +127,54 @@ export default function Home() {
 
     dispatch({ type: 'sendingUserMessage', payload: input });
 
-    await fetchEventSource('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model: model,
-        messages: newMessages,
-        stream: true,
-      }),
-      async onopen(response) {
-        if (response.status >= 400) {
-          dispatch({ type: 'receivedError', payload: response.statusText });
-        }
-      },
-      onmessage(ev) {
-        console.log(ev.data);
-        if (ev.data === '[DONE]') {
-          dispatch({ type: 'finishedReceivingMessage' });
-          return;
-        }
+    try {
+      await fetchEventSource('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+          model: model,
+          messages: newMessages.filter((m) => m.role !== 'error'),
+          stream: true,
+        }),
+        async onopen(response) {
+          if (response.status >= 400) {
+            const res = await response.json();
+            const errMessage =
+              res.error?.message || response.statusText || response.status;
 
-        const data = JSON.parse(ev.data);
-        const content = data.choices?.[0]?.delta?.content;
-        if (content) {
-          dispatch({
-            type: 'receivedMessageChunk',
-            payload: content,
-          });
-        }
-      },
-      onerror(err) {
-        dispatch({ type: 'receivedError', payload: err.message });
-      },
-    });
+            throw new APIError(errMessage);
+          }
+        },
+        onmessage(ev) {
+          console.log(ev.data);
+          if (ev.data === '[DONE]') {
+            dispatch({ type: 'finishedReceivingMessage' });
+            return;
+          }
+
+          const data = JSON.parse(ev.data);
+          const content = data.choices?.[0]?.delta?.content;
+          if (content) {
+            dispatch({
+              type: 'receivedMessageChunk',
+              payload: content,
+            });
+          }
+        },
+        onerror(err) {
+          throw err;
+        },
+      });
+    } catch (err: any) {
+      const errorPrefix =
+        err instanceof APIError
+          ? 'Error while calling OpenAI APIs: '
+          : 'Unknown error: ';
+      dispatch({ type: 'receivedError', payload: errorPrefix + err.message });
+    }
   }
 
   return (

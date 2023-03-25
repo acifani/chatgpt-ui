@@ -17,3 +17,8 @@
 .user {
   background-color: var(--lightest-grey);
 }
+
+.error {
+  background-color: var(--white);
+  color: var(--red);
+}
