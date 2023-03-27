@@ -201,7 +201,13 @@ export default function Home() {
                 placeholder="gpt-3.5-turbo"
                 onChange={(e) => setModel(e.target.value)}
                 value={model}
+                list="chat-models"
               />
+              <datalist id="chat-models">
+                <option value="gpt-3.5-turbo" />
+                <option value="gpt-4" />
+                <option value="gpt-4-32k" />
+              </datalist>
             </div>
           </menu>
         </header>
