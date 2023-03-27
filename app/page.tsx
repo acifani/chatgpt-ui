@@ -31,7 +31,7 @@ const defaultState: State = {
 
 type Action =
   | { type: 'setInput'; payload: string }
-  | { type: 'sendingUserMessage'; payload: string }
+  | { type: 'sendingUserMessage'; payload: Message[] }
   | { type: 'startReceivingMessage' }
   | { type: 'receivedMessageChunk'; payload: string }
   | { type: 'receivedError'; payload: string }
@@ -47,10 +47,7 @@ function reducer(state: State, action: Action): State {
         ...state,
         input: '',
         isLoading: true,
-        messages: [
-          ...state.messages,
-          { role: 'user', content: action.payload },
-        ],
+        messages: [...action.payload],
       };
 
     case 'receivedMessageChunk':
@@ -125,7 +122,7 @@ export default function Home() {
       { role: 'user', content: input },
     ] satisfies Message[];
 
-    dispatch({ type: 'sendingUserMessage', payload: input });
+    dispatch({ type: 'sendingUserMessage', payload: newMessages });
 
     try {
       await fetchEventSource('https://api.openai.com/v1/chat/completions', {
