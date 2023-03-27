@@ -102,18 +102,12 @@ export default function Home() {
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     if (!apiKey) {
-      dispatch({
-        type: 'receivedError',
-        payload: 'Please enter an API key',
-      });
+      dispatch({ type: 'receivedError', payload: 'Please enter an API key' });
       return;
     }
 
     if (!model) {
-      dispatch({
-        type: 'receivedError',
-        payload: 'Please select a model',
-      });
+      dispatch({ type: 'receivedError', payload: 'Please select a model' });
       return;
     }
 
@@ -146,7 +140,6 @@ export default function Home() {
           }
         },
         onmessage(ev) {
-          console.log(ev.data);
           if (ev.data === '[DONE]') {
             dispatch({ type: 'finishedReceivingMessage' });
             return;
@@ -155,10 +148,7 @@ export default function Home() {
           const data = JSON.parse(ev.data);
           const content = data.choices?.[0]?.delta?.content;
           if (content) {
-            dispatch({
-              type: 'receivedMessageChunk',
-              payload: content,
-            });
+            dispatch({ type: 'receivedMessageChunk', payload: content });
           }
         },
         onerror(err) {
